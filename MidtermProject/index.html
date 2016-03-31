@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<title>title</title>
+		<meta name="author" content="name">
+		<meta name="description" content="description here">
+		<meta name="keywords" content="keywords,here">
+		<link rel="stylesheet" href="styles/styles.css" type="text/css">
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+		<script src="js/d3.min.js" type="text/javascript"></script>
+		<style type="text/css">
+            svg text{
+                fill: black;
+            }
+            svg circle{
+                fill: rgba(0, 0, 200, 0.7);
+            }
+            svg circle.selected{
+                fill: rgba(200, 0, 0, 0.7);
+            }
+
+            .axis path{
+                fill: none;
+                stroke: #333;
+            }
+
+            .x.axis,
+            .y.axis{
+                font-size: 16px;
+                color: #333;
+            }
+
+            .d3-tip {
+              font-size: 10px;
+              padding: 8px;
+              background: rgba(0, 0, 0, 0.8);
+              color: #fff;
+            }
+
+        </style>
+	</head>
+	<body>
+  		<script type="text/javascript">
+            d3.tsv('data/data.tsv', function(error, data){
+                console.log('called load data');
+                if(error){
+                    console.log(error);
+                }else{
+                    var graph = Graph (data);
+                    graph.setup ();
+                }
+            });
+
+            var DataType = {
+            	GOAL:"Goal",
+            	PLEDGED:"Pledged",
+            	BACKERS:"Backers"
+            };
+            var SortType = {
+            	TIME:"Goal",
+            	PLEDGED:"Pledged",
+            	BACKERS:"Backers"
+            };
+            var xSort = SortType.BACKERS;	//x stuff
+            var ySort = DataType.PLEDGED;	//y stuff
+            
+            var Graph = function (_data) {
+            	var obj = {};
+            	this.rawData = _data;
+            	// var sortData = rawData;
+            	var margin = {top: 100, right: 100, bottom: 100, left: 100};
+                var width = window.innerWidth - margin.left - margin.right;
+                var height = window.innerHeight - margin.top - margin.bottom;
+
+                var svg, chart, 
+
+                	sortXToggleTime,
+                	sortXToggleGoal,
+                	sortXToggleBackers,
+                	sortXToggleBackerHype,
+                	sortXTogglePledged,
+                	sortXTogglePledgeHype,
+                	
+                	xScale, yScale, 
+                	xAxis, yAxis;
+
+            	obj.setup = function () {
+            		rawData.forEach(function(d) {
+			            d.Pledged = parseInt (d.Pledged);
+			            d.PledgeHype = parseInt (d.PledgeHype);
+			            d.Backers = parseInt(d.Backers);
+			            d.BackerHype = parseInt(d.BackerHype);
+			        });
+
+			        obj.sortByType (rawData, "Backers", 50, false);
+
+			        console.log (rawData);
+
+					svg = d3.select('body')
+	                    .append('svg')
+	                    .attr('width', window.innerWidth)
+	                    .attr('height', window.innerHeight)
+	                    ;
+	               
+	                // svg.call(tip);                    
+
+	                chart = svg.append('g')
+	                    .attr('transform', 'translate('+margin.left+', '+margin.top+')')
+	                    ;
+
+	                // Appending the axis
+	                chart.append('g')
+	                    .attr('transform', 'translate(0, '+height+')')
+	                    .attr('class', 'x axis')
+	                    ;
+	                chart.append('g')
+	                    .attr('class', 'y axis')
+	                    ;
+
+	                // Appending controls
+
+
+	                obj.update(rawData);
+            	};
+
+            	obj.update = function () {
+	 				var xData = new ScalerData (rawData, xSort, width, false);
+	                var yData = new ScalerData (rawData, ySort, height, true);
+                
+					//=====SCALES======
+					xScale = d3.scale.linear()
+	                    .domain([xData.min, xData.max])   // input (min, max)
+	                    .range([0, width])           // output (min, max)
+	                    ;   
+	                yScale = d3.scale.linear()
+	                    .domain([yData.min, yData.max])   // input (min, max)
+	                    .range([height, 0])           // output (min, max)
+	                    ;   
+                	
+                	//=====AXIS======
+	                xAxis = d3.svg.axis()
+	                    .scale(xScale)
+	                    .orient('bottom')
+	                    ;
+	                yAxis = d3.svg.axis()
+	                    .scale(yScale)
+	                    .orient('left')
+	                    ;
+
+	                d3.select ('.x.axis')
+	                	.call(xAxis);
+	                d3.select ('.y.axis')
+	                	.call(yAxis);
+
+	                var barWidth = width / rawData.length;
+	                var barFill = barWidth * .85;
+	                
+
+		            var bar = chart.selectAll ('bar')
+	                	.data(rawData)
+	                	;
+	                var barEnter = bar.enter()
+	                	.append ('rect');
+	                var barUpdate = bar
+	                	.attr ('class', 'bar')
+	                	.attr ('x', function (d, i) { return (width / rawData.length) * i; })
+	                	.attr ('width', barFill)
+	                	.attr ("y", function(d) { return yScale(d[ySort]); })
+	                	.attr ("height", function(d) { 
+	                		var newheight = height - yScale(d[ySort]);
+
+	                		if (newheight === 0) console.log (d);
+	                		return newheight;
+	                	})
+	                	.attr ("description", function (d) { return d["name"]; })
+	                	;
+
+	                //TODO:
+	                var barInteraction;
+	                var barExit;	
+            	};
+
+            	obj.sortByType = function (data, type, trimNum, ascending) {
+            		var adj = ascending ? 1 : -1;
+            		data.sort(function (a,b) {
+            			if (a[type] > b[type]) 
+            				return 1 * adj;
+            			else if (a[type] < b[type]) 
+            				return -1 * adj;
+            			else 
+            				return 0;
+            		});
+
+            		data.splice (trimNum);
+            	}
+
+            	return obj;
+            }
+            var ScalerData = function (_data, _type, _range, _reverseSort) {
+            	var data = {};
+            	data.type = _type;
+            	data.min = _reverseSort ? 
+	            	d3.max(_data, function (d,i) {
+	            		return d[_type];
+	                }) :
+	            	d3.min(_data, function (d,i) {
+	            		return d[_type];
+                	});
+
+	            data.max = _reverseSort ? 
+	            	d3.min(_data, function (d,i) {
+                		return d[_type];
+                	}) :
+					d3.max(_data, function (d,i) {
+	                	return d[_type];
+	                });
+	            return data;
+            }
+        </script>
+	</body>
+</html>
