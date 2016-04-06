@@ -48,27 +48,41 @@
                 if(error){
                     console.log(error);
                 }else{
-                    var graph = Graph (data);
+                    graph = Graph (data);
                     graph.setup ();
                 }
             });
+            var graph;
 
             var DataType = {
             	GOAL:"Goal",
             	PLEDGED:"Pledged",
-            	BACKERS:"Backers"
+            	PLEDGEHYPE:"PledgeHype",
+            	BACKERS:"Backers",
+            	BACKERHYPE:"BackerHype"
             };
-            var SortType = {
-            	TIME:"Goal",
-            	PLEDGED:"Pledged",
-            	BACKERS:"Backers"
-            };
-            var xSort = SortType.BACKERS;	//x stuff
+            var OrdinalType = {
+            	// NAME: ""
+            }
+            // var SortType = {
+            // 	TIME:"Goal",
+            // 	PLEDGED:"Pledged",
+            // 	BACKERS:"Backers"
+            // };
+            // var xSort = DataType.PLEDGED;	//x stuff
             var ySort = DataType.PLEDGED;	//y stuff
             
             var Graph = function (_data) {
             	var obj = {};
-            	this.rawData = _data;
+            	// obj.rawData = _data;
+            	obj.data = _data;
+
+            	var currentSort = DataType.PLEDGED;
+
+            	obj.setSort = function (newSetting) {
+            		currentSort = newSetting;
+            	}
+
             	// var sortData = rawData;
             	var margin = {top: 100, right: 100, bottom: 100, left: 100};
                 var width = window.innerWidth - margin.left - margin.right;
@@ -86,17 +100,24 @@
                 	xScale, yScale, 
                 	xAxis, yAxis;
 
+                var textControlsY = 20,
+                	textHypeXOffset = 40,
+                	textRawXOffset = 140;
+
+                var textControllerRaw,
+                	textControllerHype
+
             	obj.setup = function () {
-            		rawData.forEach(function(d) {
+            		obj.data.forEach(function(d) {
 			            d.Pledged = parseInt (d.Pledged);
 			            d.PledgeHype = parseInt (d.PledgeHype);
 			            d.Backers = parseInt(d.Backers);
 			            d.BackerHype = parseInt(d.BackerHype);
 			        });
 
-			        obj.sortByType (rawData, "Backers", 50, false);
+			        obj.sortByType (obj.data, currentSort, 50, false);
 
-			        console.log (rawData);
+			        console.log (obj.data);
 
 					svg = d3.select('body')
 	                    .append('svg')
@@ -119,23 +140,78 @@
 	                    .attr('class', 'y axis')
 	                    ;
 
+	                textControllerRaw = chart.append('text')
+	                	.attr("x", width - textRawXOffset)
+	                	.attr("y", - textControlsY)
+	                	.attr("class", "rawToggle")
+	                	// .text("Raw")
+	                	.text("Pledged")
+	                	.attr("font-family", "sans-serif")
+						.attr("font-size", "20px")
+						.attr("fill", "red");
+
+					textControllerHype = chart.append('text')
+	                	.attr("x", width - textHypeXOffset)
+	                	.attr("y", - textControlsY)
+	                	.attr("class", "hypeToggle")
+	                	// .text("Hype")
+	                	.text("Backers")
+	                	.attr("font-family", "sans-serif")
+						.attr("font-size", "20px")
+						.attr("fill", "red");
+
+
+					d3.select(".rawToggle").on("click", function () {
+						console.log("pledged Toggled");
+
+						d3.tsv('data/data.tsv', function(error, data){
+			                if(error){
+			                    console.log(error);
+			                }else{
+			                    graph.data = data;
+			                    currentSort = DataType.PLEDGED;
+								obj.update();
+								obj.sortByType (obj.data, currentSort, 50, false);
+			                }
+			            });
+
+						
+					});
+
+					d3.select(".hypeToggle").on("click", function () {
+						console.log("backers Toggled");
+						d3.tsv('data/data.tsv', function(error, data){
+			                if(error){
+			                    console.log(error);
+			                }else{
+			                    graph.data = data;
+			                    currentSort = DataType.BACKERS;
+								obj.update();
+								obj.sortByType (obj.data, currentSort, 50, false);
+			                }
+			            });
+						
+					});
+
 	                // Appending controls
 
 
-	                obj.update(rawData);
+	                obj.update(obj.data);
             	};
 
+            	obj.yData;
             	obj.update = function () {
-	 				var xData = new ScalerData (rawData, xSort, width, false);
-	                var yData = new ScalerData (rawData, ySort, height, true);
+	 				// var xData = new ScalerData (rawData, currentSort);
+	                obj.yData = new ScalerData (obj.data, currentSort);
                 
 					//=====SCALES======
-					xScale = d3.scale.linear()
-	                    .domain([xData.min, xData.max])   // input (min, max)
+					xScale = d3.scale.ordinal()
+	                    // .domain([xData.min, xData.max])   // input (min, max)
+	                    // .rangeRoundBands([0, width], .1);
 	                    .range([0, width])           // output (min, max)
 	                    ;   
 	                yScale = d3.scale.linear()
-	                    .domain([yData.min, yData.max])   // input (min, max)
+	                    .domain([obj.yData.min, obj.yData.max])   // input (min, max)
 	                    .range([height, 0])           // output (min, max)
 	                    ;   
                 	
@@ -150,41 +226,89 @@
 	                    ;
 
 	                d3.select ('.x.axis')
+	                	.transition()
+                        .duration(2000)
 	                	.call(xAxis);
 	                d3.select ('.y.axis')
+	                	.transition()
+                        .duration(2000)
 	                	.call(yAxis);
 
-	                var barWidth = width / rawData.length;
+	                var barWidth = width / obj.data.length;
 	                var barFill = barWidth * .85;
 	                
 
 		            var bar = chart.selectAll ('bar')
-	                	.data(rawData)
+	                	.data(obj.data)
 	                	;
 	                var barEnter = bar.enter()
 	                	.append ('rect');
 	                var barUpdate = bar
 	                	.attr ('class', 'bar')
-	                	.attr ('x', function (d, i) { return (width / rawData.length) * i; })
+	                	.attr ('x', function (d, i) { return (width / obj.data.length) * i; })
 	                	.attr ('width', barFill)
 	                	.attr ("y", function(d) { return yScale(d[ySort]); })
 	                	.attr ("height", function(d) { 
 	                		var newheight = height - yScale(d[ySort]);
 
-	                		if (newheight === 0) console.log (d);
+	                		// if (newheight === 0) {
+
+	                		// 	console.log (height);
+	                		// 	console.log (obj.yData.max);
+	                		// 	console.log (d);
+	                		// 	console.log (yScale);
+	                		// 	console.log (ySort);
+	                		// 	console.log (yScale(d[ySort]));
+	                			
+	                		// }
 	                		return newheight;
 	                	})
+	                	.transition()
+                        .duration(2000)
+	                	.attr ("data-pledged", function (d) { return d["Pledged"] })
 	                	.attr ("description", function (d) { return d["name"]; })
 	                	;
 
 	                //TODO:
-	                var barInteraction;
-	                var barExit;	
+	                var barInteraction = bar
+	                	.on ('mouseover', function (d, i) {
+	                		d3.select(this)
+	                		.style('fill', 'red')
+	                	})
+	                	.on ('mouseout', function (d, i) {
+	                		d3.select(this)
+	                		.style('fill', 'black')	
+	                	});
+	                var barExit = bar.exit()
+	                	.remove()
+	                	;	
             	};
+
+            	obj.log = function () {
+            		// var returnString;
+            		// console.log ("yScale");
+            		// console.log ("yScale: " + yScale(obj.data[0][ySort]));
+            		// console.log ("yScale: " + obj);
+            		
+            		// return yScale(obj.data[0][ySort]);
+            		return yScale(obj.data);
+            	};
+            	// var setScale = function (_type) {
+            	// 	var scale;
+            	// 	switch (_type) {
+            	// 		default:
+            	// 		case DataType.Backers:
+
+            	// 		break;
+            	// 		case "Alp"
+            	// 	}
+            	// }
 
             	obj.sortByType = function (data, type, trimNum, ascending) {
             		var adj = ascending ? 1 : -1;
-            		data.sort(function (a,b) {
+            		// var newData = Object.create(data);
+            		var newData = data;
+            		newData.sort(function (a,b) {
             			if (a[type] > b[type]) 
             				return 1 * adj;
             			else if (a[type] < b[type]) 
@@ -193,29 +317,55 @@
             				return 0;
             		});
 
-            		data.splice (trimNum);
+            		newData.splice (trimNum);
+            		obj.data = newData;
             	}
 
             	return obj;
             }
-            var ScalerData = function (_data, _type, _range, _reverseSort) {
+            var ScalerData = function (_data, _type) {
             	var data = {};
             	data.type = _type;
-            	data.min = _reverseSort ? 
-	            	d3.max(_data, function (d,i) {
-	            		return d[_type];
-	                }) :
-	            	d3.min(_data, function (d,i) {
-	            		return d[_type];
-                	});
 
-	            data.max = _reverseSort ? 
-	            	d3.min(_data, function (d,i) {
-                		return d[_type];
-                	}) :
-					d3.max(_data, function (d,i) {
-	                	return d[_type];
-	                });
+            	// switch  (_type) {
+            	// 	default:
+            	// 	case DataType.PLEDGED:
+        		data.min = d3.min(_data, function (d,i) {
+            		return d[_type];
+            	});
+            	data.max = d3.max(_data, function (d,i) {
+                	return d[_type];
+                });
+
+	            //     case DataType.BACKERS:
+            	// 	data.min = d3.min(_data, function (d,i) {
+	            // 		return d[_type];
+             //    	});
+             //    	data.max = d3.max(_data, function (d,i) {
+	            //     	return d[_type];
+	            //     });
+            	// 	break;
+
+            	// 	// case SortType.BACKERS:
+
+            	// 	// break;
+            	// }
+
+     //        	data.min = _reverseSort ? 
+	    //         	d3.max(_data, function (d,i) {
+	    //         		return d[_type];
+	    //             }) :
+	    //         	d3.min(_data, function (d,i) {
+	    //         		return d[_type];
+     //            	});
+
+	    //         data.max = _reverseSort ? 
+	    //         	d3.min(_data, function (d,i) {
+     //            		return d[_type];
+     //            	}) :
+					// d3.max(_data, function (d,i) {
+	    //             	return d[_type];
+	    //             });
 	            return data;
             }
         </script>
