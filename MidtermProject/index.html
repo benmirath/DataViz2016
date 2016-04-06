@@ -202,15 +202,18 @@
             		console.log (obj.subSelection);
 
             		var adj = obj.invertSort ? 1 : -1;
-            		// var adj = 1;
 	               	obj.subSelection.sort(function (a,b) {
-	               		if (obj.currentSort === "launched_at") adj *= -1;
-            			if (a[obj.currentSort] > b[obj.currentSort]) 
-            				return 1 * adj;
-            			else if (a[obj.currentSort] < b[obj.currentSort]) 
-            				return -1 * adj;
-            			else 
-            				return 0;
+	               		if (obj.currentSort === "launched_at") {
+	               			return (a[obj.currentSort].getTime() - b[obj.currentSort].getTime()) * adj;
+	               		} else {
+	               			if (a[obj.currentSort] > b[obj.currentSort]) 
+	            				return 1 * adj;
+	            			else if (a[obj.currentSort] < b[obj.currentSort]) 
+	            				return -1 * adj;
+	            			else 
+	            				return 0;
+	               		}
+            			
             		});
 
 					//=====SCALE======
