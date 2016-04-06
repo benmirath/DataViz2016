@@ -12,35 +12,54 @@
 		<script src="js/d3.min.js" type="text/javascript"></script>
 		<style type="text/css">
 			body {
-				background-color: #def7e0;
+				/*background-color: #def7e0;*/
+				background-color: #FAE8E9;
 			}
             svg text{
-                fill: #0F2105;
+                /*fill: #0F2105;*/
+                fill: #330B16;
             }
             .bar {
-            	fill: #0F2105;
+            	/*fill: #0F2105;*/
+            	fill: #7ACDC9;
+            	transition: fill .5s;
             }
             .bar:hover {
-            	fill: #2BDE73;
+            	/*fill: #2BDE73;*/
+            	fill: #DB3568;
             }
             .label {
             	font-weight: bold;
             }
             .axis path{
                 fill: none;
-                stroke: #0F2105;
+                /*stroke: #0F2105;*/
+                stroke: #330B16;
             }
 
             .x.axis,
             .y.axis{
                 font-size: 16px;
-                color: #0F2105;
+                /*color: #0F2105;*/
+                color: #330B16;
             }
 
             #tooltipGoalLabel, 
             #tooltipPledgedLabel, 
             #tooltipBackersLabel {
             	font-weight: bold;
+            }
+            #controls {
+            	text-align: center;
+            }
+            .control {
+            	/*background-color: #DB3568;*/
+            }
+            select.control {
+            	-webkit-appearance: menulist;
+            }
+            button.control {
+            	-webkit-appearance: button;
             }
         </style>
 	</head>
@@ -247,6 +266,32 @@
 	                	.call(yAxis)
 	                	;
 
+	                //====CLEAR TEXT======
+	                $('#tooltipHeader')
+	            		.text("Hover on a bar for more info")
+	            		;
+	            	$('#tooltipDescription')
+	            		.text("")
+	            		;
+	            	$('#tooltipGoalLabel')
+	            		.text("")
+	            		;
+	            	$('#tooltipGoal')
+	            		.text("")
+	            		;
+	            	$('#tooltipPledgedLabel')
+	            		.text("")
+	            		;
+	            	$('#tooltipPledged')
+	            		.text("")
+	            		;
+	            	$('#tooltipBackersLabel')
+	            		.text("")
+	            		;
+	            	$('#tooltipBackers')
+	            		.text("")
+	            		;
+
 	                //=====DRAW DATA======
 	                var barWidth = width / obj.xLimit;
 	                var barFill = barWidth * .85;
@@ -354,22 +399,6 @@
             	graph.currentScaler = document.getElementById("rescale").value;
             	resort();
             	graph.update ();
-
-            	$('#tooltipHeader')
-            		.text("Hover on a bar for more info")
-            		;
-            	$('#tooltipDescription')
-            		.text("")
-            		;
-            	$('#tooltipGoal')
-            		.text("")
-            		;
-            	$('#tooltipPledged')
-            		.text("")
-            		;
-            	$('#tooltipBackers')
-            		.text("")
-            		;
             }
             function invertSort () {
             	console.log ("click logged!");
@@ -378,20 +407,21 @@
             }
         </script>
 
-
-        <select id="resort" onchange="resort()">
-			<option value="Time">Time</option>
-			<option value="Total">Total</option>
-			<option value="Hype">Hype</option>
-		</select>
-		<select id="rescale" onchange="rescale()">
-			<option value="Goal">Goal</option>
-			<option value="Pledged">Pledged</option>
-			<option value="PledgeHype">PledgeHype</option>
-			<option value="Backers">Backers</option>
-			<option value="BackerHype">BackerHype</option>
-		</select>
-		<button type="button" onclick="invertSort()">Invert X</button>
+        <div id="controls">
+	        <select class="control" id="resort" onchange="resort()">
+				<option value="Time">Time</option>
+				<option value="Total">Total</option>
+				<option value="Hype">Hype</option>
+			</select>
+			<select class="control" id="rescale" onchange="rescale()">
+				<option value="Goal">Goal</option>
+				<option value="Pledged">Pledged</option>
+				<option value="PledgeHype">PledgeHype</option>
+				<option value="Backers">Backers</option>
+				<option value="BackerHype">BackerHype</option>
+			</select>
+			<button class="control" type="button" onclick="invertSort()">Invert X</button>
+		</div>
 		<!-- <p>Invert</p><input type="checkbox" id="invert" name="invert">  -->
 
 	</body>
