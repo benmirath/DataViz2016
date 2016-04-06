@@ -267,14 +267,14 @@
 	                	.attr ("y", function(d, i) { 
 	                		var _y = yScale(d[obj.currentScaler]); 
 	                		if (_y === height) {
-	                			_y = height - 5;
+	                			_y = height;
 	                		}
 	                		return _y;
 	                	})
 	                	.attr ("height", function(d) { 
 	                		var _height = height - yScale(d[obj.currentScaler])
 	                		if (_height === 0) {
-	                			_height = 10;
+	                			_height = 6;
 	                		}
 	                		return _height; 
 	                	})
@@ -352,6 +352,7 @@
             function rescale () {
             	
             	graph.currentScaler = document.getElementById("rescale").value;
+            	resort();
             	graph.update ();
 
             	$('#tooltipHeader')
