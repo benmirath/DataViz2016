@@ -11,40 +11,46 @@
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
 		<script src="js/d3.min.js" type="text/javascript"></script>
 		<style type="text/css">
+			body {
+				background-color: #def7e0;
+			}
             svg text{
-                fill: black;
+                fill: #0F2105;
             }
-            svg circle{
-                fill: rgba(0, 0, 200, 0.7);
+            .bar {
+            	fill: #0F2105;
             }
-            svg circle.selected{
-                fill: rgba(200, 0, 0, 0.7);
+            .bar:hover {
+            	fill: #2BDE73;
             }
-
+            .label {
+            	font-weight: bold;
+            }
             .axis path{
                 fill: none;
-                stroke: #333;
+                stroke: #0F2105;
             }
 
             .x.axis,
             .y.axis{
                 font-size: 16px;
-                color: #333;
+                color: #0F2105;
             }
 
-            .d3-tip {
-              font-size: 10px;
-              padding: 8px;
-              background: rgba(0, 0, 0, 0.8);
-              color: #fff;
+            #tooltipGoalLabel, 
+            #tooltipPledgedLabel, 
+            #tooltipBackersLabel {
+            	font-weight: bold;
             }
-
         </style>
 	</head>
 	<body>
   		<script type="text/javascript">
   		 var graph;
-            // var SortType
+            // var SortType = {
+            // 	TIME:"launched_at",
+            // 	TOTAL: 
+            // }
             var DataType = {
             	GOAL:"Goal",
             	PLEDGED:"Pledged",
@@ -54,16 +60,16 @@
             };
                        
             d3.tsv('data/data.tsv', function(error, data){
-                console.log('called load data');
+                // console.log('called load data');
                 if(error){
                     console.log(error);
                 }else{
                 	data.forEach(function(d) {
                 		d.Goal = parseInt (d.Goal);
 			            d.Pledged = parseInt (d.Pledged);
-			            d.PledgeHype = parseInt (d.PledgeHype);
+			            d.PledgeHype = parseFloat (d.PledgeHype);
 			            d.Backers = parseInt(d.Backers);
-			            d.BackerHype = parseInt(d.BackerHype);
+			            d.BackerHype = parseFloat(d.BackerHype);
 			            d.launched_at = new Date(d.launched_at);
 			            d.created_at = new Date(d.created_at);
 			            d.deadline = new Date(d.deadline);
@@ -72,43 +78,18 @@
                     graph.setup ();
                 }
             });
-           
             var Graph = function (_data) {
             	var obj = {};
-            	// var rawData = _data;
-            	obj.currentScaler = DataType.GOAL;
+
             	var margin = {top: 50, right: 100, bottom: 250, left: 100};
                 var width = window.innerWidth - margin.left - margin.right;
                 var height = window.innerHeight - margin.top - margin.bottom;
 
-                var svg, chart, 
-
-                	sortXToggleTime,
-                	sortXToggleGoal,
-                	sortXToggleBackers,
-                	sortXToggleBackerHype,
-                	sortXTogglePledged,
-                	sortXTogglePledgeHype,
-                	
+                var svg, chart,                	
                 	xScale, yScale, 
                 	xAxis, yAxis;
 
-                var textControlsY = 20,
-                	textHypeXOffset = 40,
-                	textRawXOffset = 140;
-
-                // var textControllerRaw,
-                // 	textControllerHype;
-
-                // var tooltipHeader,
-                // 	tooltipDescription;
-
-                obj.data = _data;
-                obj.yData;
-                obj.xLimit = 50;
-            	obj.setup = function () {
-			        console.log (obj.data);
-
+            	var setupChart = function () {
 					svg = d3.select('body')
 	                    .append('svg')
 	                    .attr('width', window.innerWidth)
@@ -127,97 +108,85 @@
 	                chart.append('g')
 	                    .attr('class', 'y axis')
 	                    ;
-
-
-	                // Appending controls
-	    //             textControllerRaw = chart.append('text')
-	    //             	.attr("x", width - textRawXOffset)
-	    //             	.attr("y", - textControlsY)
-	    //             	.attr("class", "rawToggle")
-	    //             	// .text("Raw")
-	    //             	.text("Pledged")
-	    //             	.attr("font-family", "sans-serif")
-					// 	.attr("font-size", "20px")
-					// 	.attr("fill", "red")
-					// 	;
-
-					// textControllerHype = chart.append('text')
-	    //             	.attr("x", width - textHypeXOffset)
-	    //             	.attr("y", - textControlsY)
-	    //             	.attr("class", "hypeToggle")
-	    //             	// .text("Hype")
-	    //             	.text("Backers")
-	    //             	.attr("font-family", "sans-serif")
-					// 	.attr("font-size", "20px")
-					// 	.attr("fill", "red")
-					// 	;
-
+            	}
+            	var setupControls = function () {
+					var textStartY = height + 30;
 					chart.append('text')
 						.attr("id", "tooltipHeader")
 						.attr("x", 0)
-						.attr("y", height + 50)
+						.attr("y", textStartY)
 						.text("Hover on a bar for more info.")
-						.attr("font-family", "sans-serif")
 						.attr("font-weight", "bold")
-						.attr()
-						.attr("font-size", "20px")
 						;
+
+					textStartY += 30;
 					chart.append('text')
 						.attr("id", "tooltipDescription")
 						.attr("x", 0)
-						.attr("y", height + 80)
+						.attr("y", textStartY)
 						.text("")
-						.attr("font-family", "sans-serif")
-						.attr("font-size", "20px")
 						;
 
+					textStartY += 30;
+					chart.append('text')
+						.attr("id", "tooltipGoalLabel")
+						.attr("x", 0)
+						.attr("y", textStartY)
+						.text("")
+						;
 					chart.append('text')
 						.attr("id", "tooltipGoal")
-						.attr("x", 0)
-						.attr("y", height + 110)
+						.attr("x", 40)
+						.attr("y", textStartY)
 						.text("")
-						.attr("font-family", "sans-serif")
-						.attr("font-size", "20px")
+						;
+
+					textStartY += 30;	
+					chart.append('text')
+						.attr("id", "tooltipPledgedLabel")
+						.attr("x", 0)
+						.attr("y", textStartY)
+						.text("")
 						;
 					chart.append('text')
 						.attr("id", "tooltipPledged")
-						.attr("x", 0)
-						.attr("y", height + 140)
+						.attr("x", 65)
+						.attr("y", textStartY)
 						.text("")
-						.attr("font-family", "sans-serif")
-						.attr("font-size", "20px")
+						;
+
+					textStartY += 30;
+					chart.append('text')
+						.attr("id", "tooltipBackersLabel")
+						.attr("x", 0)
+						.attr("y", textStartY)
+						.text("")
 						;
 					chart.append('text')
 						.attr("id", "tooltipBackers")
-						.attr("x", 0)
-						.attr("y", height + 170)
+						.attr("x", 65)
+						.attr("y", textStartY)
 						.text("")
-						.attr("font-family", "sans-serif")
-						.attr("font-size", "20px")
 						;
+            	}
+				obj.data = _data;
+				obj.subSelection;
+                obj.yData;
+                obj.xLimit = 50;
+                obj.currentScaler = DataType.GOAL;
+                obj.currentSort = "launched_at";
+                obj.invertSort = false;
+            	obj.setup = function () {
+			        setupChart();
+			        setupControls();
 
-
-					chart.select(".rawToggle").on("click", function () {
-						currentSort = DataType.PLEDGED;
-			            graph.update (obj.data);						
-					});
-
-					chart.select(".hypeToggle").on("click", function () {
-						currentSort = DataType.BACKERS;
-	                	graph.update (obj.data);
-					});
-
-	                obj.update(obj.data);
+			        obj.fullSort();
+	                obj.update();
             	};
 
-            	obj.update = function () {
-	 				// var xData = new ScalerData (rawData, currentSort);
-	                // obj.yData = new ScalerData (obj.data, currentSort);
-	               	// sortByType (dataset, false);
-	               	var ascending = false;
+            	obj.fullSort = function () {
+            		var ascending = false;
 	               	var adj = ascending ? 1 : -1;
-            		// console.log("dataset");
-            		// console.log(currentScaler);
             		obj.data.sort(function (a,b) {
             			if (a[obj.currentScaler] > b[obj.currentScaler]) 
             				return 1 * adj;
@@ -226,19 +195,30 @@
             			else 
             				return 0;
             		});
+            	}
 
-					//=====SCALES======
+            	obj.update = function () {
+            		obj.subSelection = obj.data.slice(0,50);
+            		console.log (obj.subSelection);
+
+            		var adj = obj.invertSort ? 1 : -1;
+            		// var adj = 1;
+	               	obj.subSelection.sort(function (a,b) {
+	               		if (obj.currentSort === "launched_at") adj *= -1;
+            			if (a[obj.currentSort] > b[obj.currentSort]) 
+            				return 1 * adj;
+            			else if (a[obj.currentSort] < b[obj.currentSort]) 
+            				return -1 * adj;
+            			else 
+            				return 0;
+            		});
+
+					//=====SCALE======
+					var min = d3.min (obj.subSelection, function(d,i) { return d[obj.currentScaler]; });
+	                var max = d3.max (obj.subSelection, function(d,i) { return d[obj.currentScaler]; });       
 					xScale = d3.scale.ordinal()
 	                    .range([0, width])           // output (min, max)
 	                    ;
-
-	               	var min = d3.min (obj.data, function(d,i) {
-	                	return d[obj.currentScaler];
-	                });
-	                var max = d3.max (obj.data, function(d,i) {
-	                	return d[obj.currentScaler];
-	                });                
-
 	                yScale = d3.scale.linear()
 	                    .domain([min, max])
 	                    .range([height, 0])           // output (min, max)
@@ -253,24 +233,23 @@
 	                    .scale(yScale)
 	                    .orient('left')
 	                    ;
-
 	                chart.select ('.x.axis')
 	                	.transition()
                         .duration(2000)
 	                	.call(xAxis)
 	                	;
-
 	                chart.select ('.y.axis')
 	                	.transition()
                         .duration(2000)
 	                	.call(yAxis)
 	                	;
 
+	                //=====DRAW DATA======
 	                var barWidth = width / obj.xLimit;
 	                var barFill = barWidth * .85;
 	                
 		            var bar = chart.selectAll ('rect')
-	                	.data(obj.data)
+	                	.data(obj.subSelection)
 	                	;
 	                var barEnter = bar.enter()
 	                	.append ('rect')
@@ -282,43 +261,40 @@
 	                	.attr ('class', 'bar')
 	                	.attr ('x', function (d, i) { return (width / obj.xLimit) * i; })
 	                	.attr ('width', barFill)
-	                	.attr ("y", function(d, i) { return yScale(d[obj.currentScaler]); })
-	                	.attr ("height", function(d) { 
-	                		var newheight = height - yScale(d[obj.currentScaler]);
-	                		// if (currentScaler == "Pledged") {
-	                		// 	newheight = height - yScale(d[])
-	                		// }
-	                		return newheight;
+	                	.attr ("y", function(d, i) { 
+	                		var _y = yScale(d[obj.currentScaler]); 
+	                		if (_y === height) {
+	                			_y = height - 5;
+	                		}
+	                		return _y;
 	                	})
-	               	//TODO:
+	                	.attr ("height", function(d) { 
+	                		var _height = height - yScale(d[obj.currentScaler])
+	                		if (_height === 0) {
+	                			_height = 10;
+	                		}
+	                		return _height; 
+	                	})
+	                	;
 	                var barInteraction = bar
 	                	.on ('mouseover', function (d, i) {
-	                		d3.select(this)
-	                		.style('fill', 'red')
-	                		;
-	                		// console.log(d);
 	                		chart.select('#tooltipHeader')
-	                			.text(d["name"])
-	                			;
+	                			.text(d["name"] + " - (Launched on " + d["launched_at"].toDateString() + ")");
 	                		chart.select('#tooltipDescription')
-	                			.text(d["blurb"])
-	                			;
-	                		$('#tooltipGoal')
-			            		.text("Goal: " + d["Goal"])
-			            		;
+	                			.text(d["blurb"]);
+	                		$('#tooltipGoalLabel')
+	                			.text("Goal:");
+			            	$('#tooltipGoal')
+			            		.text(d["Goal"]);
+			            	$('#tooltipPledgedLabel')
+			            		.text("Pledged: ");
 			            	$('#tooltipPledged')
-			            		.text("Pledged: " + d["Pledged"])
-			            		;
+			            		.text(d["Pledged"] + " - Hype Value (" + d["PledgeHype"] + ")");
+			            	$('#tooltipBackersLabel')
+			            		.text("Backers: ");
 			            	$('#tooltipBackers')
-			            		.text("Backers: " + d["Backers"])
-			            		;
-	                		// chart.select()
+			            		.text(d["Backers"] + " - Hype Value (" + d["BackerHype"] + ")");
 	                	})
-	                	.on ('mouseout', function (d, i) {
-	                		d3.select(this)
-	                		.style('fill', 'black')	
-	                		;
-	                	});
 	                var barExit = bar.exit()
 	                	.remove()
 	                	;	
@@ -328,13 +304,51 @@
             }
 
             function resort () {
-            	console.log("resort");
+            	var sort = document.getElementById("resort").value;
+            	var currentSort = graph.currentSort;
+            	var currentScaler = graph.currentScaler;
+            	console.log(sort)
+            	console.log(sort === "Total");
+            	console.log(sort == "Total");
+            	if (sort === "Time") {
+            		currentSort = "launched_at";
+            		// console.log ()
+            	} else if (sort === "Total") {
+            		if (currentScaler === "Goal" || currentScaler === "Pledged" || currentScaler === "Backers") {
+            			currentSort = currentScaler;	
+            		} else {
+            			if (currentScaler === "PledgeHype") {
+            				currentSort = "Pledged";
+            			} else if (currentScaler === "BackerHype") {
+							currentSort = "Backers";
+            			} else {
+	            			console.log("nuthin");
+	            		}
+
+            		} 
+            	} else if (sort === "Hype") {
+
+            		if (currentScaler === "PledgeHype" || currentScaler === "BackerHype") {
+						currentSort = currentScaler;
+            		} else {
+            			if (currentScaler === "Goal" || currentScaler === "Pledged") {
+            				currentSort = "PledgeHype";
+            			} else if (currentScaler === "Backers") {
+            				currentSort = "BackerHype";
+            			}
+            		}
+            		console.log("nuthin");
+            	}
+
+            	console.log(currentSort);
+            	console.log(graph.currentSort);
+            	graph.currentSort = currentSort;
+            	graph.update();
             }
 
             function rescale () {
             	
             	graph.currentScaler = document.getElementById("rescale").value;
-            	console.log(graph.currentScaler);
             	graph.update ();
 
             	$('#tooltipHeader')
@@ -352,21 +366,19 @@
             	$('#tooltipBackers')
             		.text("")
             		;
-            	// chart.select('#tooltipHeader')
-	            //     			.text(d["name"])
-	            //     			;
-	            //     		chart.select('#tooltipDescription')
-	            //     			.text(d["blurb"])
-	            //     			;
             }
-     //        }
+            function invertSort () {
+            	console.log ("click logged!");
+            	graph.invertSort = !graph.invertSort;
+            	graph.update ();
+            }
         </script>
 
 
         <select id="resort" onchange="resort()">
-			<option value="time">Time</option>
-			<option value="magnitude">Total</option>
-			<option value="hype">Hype</option>
+			<option value="Time">Time</option>
+			<option value="Total">Total</option>
+			<option value="Hype">Hype</option>
 		</select>
 		<select id="rescale" onchange="rescale()">
 			<option value="Goal">Goal</option>
@@ -375,7 +387,8 @@
 			<option value="Backers">Backers</option>
 			<option value="BackerHype">BackerHype</option>
 		</select>
-
+		<button type="button" onclick="invertSort()">Invert X</button>
+		<!-- <p>Invert</p><input type="checkbox" id="invert" name="invert">  -->
 
 	</body>
 </html>
