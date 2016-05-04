@@ -15,10 +15,15 @@
 				/*background-color: #def7e0;*/
 				background-color: #FAE8E9;
 			}
-            svg text{
+			p, svg text{
                 /*fill: #0F2105;*/
                 fill: #330B16;
                 font-family: helvetica;
+            }
+            h1 {
+            	text-align: center;
+            	font-family: helvetica;	
+            	color: #7ACDC9;
             }
             .bar {
             	/*fill: #0F2105;*/
@@ -62,6 +67,20 @@
             button.control {
             	-webkit-appearance: button;
             }
+            div.controlsWrapper {
+            	display: inline;
+				outline-style: solid;
+				outline-width: 1px;
+				outline-color: #7ACDC9;
+				margin-right: 10px;
+				padding: 5px;
+            }
+            #entriesLabel {
+            	display: inline;
+            }
+            #entriesSlider {
+            	display: inline;
+            }
         </style>
 	</head>
 	<body>
@@ -96,12 +115,16 @@
 			        });
                     graph = Graph (data);
                     graph.setup ();
+
+                     $('#entriesSlider').on ("input", function () {
+		            	resize ();
+		            });
                 }
             });
             var Graph = function (_data) {
             	var obj = {};
 
-            	var margin = {top: 50, right: 100, bottom: 250, left: 100};
+            	var margin = {top: 50, right: 100, bottom: 300, left: 100};
                 var width = window.innerWidth - margin.left - margin.right;
                 var height = window.innerHeight - margin.top - margin.bottom;
 
@@ -128,6 +151,8 @@
 	                chart.append('g')
 	                    .attr('class', 'y axis')
 	                    ;
+
+	                $("#entriesSlider").attr('max', obj.data.length);
             	}
             	var setupControls = function () {
 					var textStartY = height + 30;
@@ -156,7 +181,7 @@
 						;
 					chart.append('text')
 						.attr("id", "tooltipGoal")
-						.attr("x", 40)
+						.attr("x", 45)
 						.attr("y", textStartY)
 						.text("")
 						;
@@ -170,7 +195,7 @@
 						;
 					chart.append('text')
 						.attr("id", "tooltipPledged")
-						.attr("x", 65)
+						.attr("x", 70)
 						.attr("y", textStartY)
 						.text("")
 						;
@@ -184,7 +209,7 @@
 						;
 					chart.append('text')
 						.attr("id", "tooltipBackers")
-						.attr("x", 65)
+						.attr("x", 70)
 						.attr("y", textStartY)
 						.text("")
 						;
@@ -192,7 +217,7 @@
 				obj.data = _data;
 				obj.subSelection;
                 obj.yData;
-                obj.xLimit = 50;
+                obj.xLimit = 150;
                 obj.currentScaler = DataType.GOAL;
                 obj.currentSort = "launched_at";
                 obj.invertSort = false;
@@ -218,7 +243,7 @@
             	}
 
             	obj.update = function () {
-            		obj.subSelection = obj.data.slice(0,50);
+            		obj.subSelection = obj.data.slice(0,obj.xLimit);
             		console.log (obj.subSelection);
 
             		var adj = obj.invertSort ? 1 : -1;
@@ -406,22 +431,40 @@
             	graph.invertSort = !graph.invertSort;
             	graph.update ();
             }
+            function resize() {
+            	// console.log ($("#entriesSlider").attr('value'));
+            	graph.xLimit = $("#entriesSlider").attr('value');
+            	$("#entriesLabel").text(graph.xLimit);
+            	graph.update ();
+            }
+
+
         </script>
 
+        <h1>KickSpotter</h1>
         <div id="controls">
-	        <select class="control" id="resort" onchange="resort()">
-				<option value="Time">Time</option>
-				<option value="Total">Total</option>
-				<option value="Hype">Hype</option>
-			</select>
-			<select class="control" id="rescale" onchange="rescale()">
-				<option value="Goal">Goal</option>
-				<option value="Pledged">Pledged</option>
-				<option value="PledgeHype">PledgeHype</option>
-				<option value="Backers">Backers</option>
-				<option value="BackerHype">BackerHype</option>
-			</select>
-			<button class="control" type="button" onclick="invertSort()">Invert X</button>
+        	<div class="controlsWrapper">
+        		<select class="control" id="resort" onchange="resort()">
+					<option value="Time">Time</option>
+					<option value="Total">Total</option>
+					<option value="Hype">Hype</option>
+				</select>
+				<select class="control" id="rescale" onchange="rescale()">
+					<option value="Goal">Goal</option>
+					<option value="Pledged">Pledged</option>
+					<option value="PledgeHype">PledgeHype</option>
+					<option value="Backers">Backers</option>
+					<option value="BackerHype">BackerHype</option>
+				</select>
+				<button class="control" type="button" onclick="invertSort()">Invert X</button>	
+        	</div>
+	        
+			<div class="controlsWrapper"> 
+				<input id="entriesSlider" type="range" defaultValue="150" value="150" min="0" max="50" step="1" />
+				<!-- <input  id="entriesLabel">50</p> -->
+				<p id="entriesLabel">150</p>
+			</div>
+			
 		</div>
 		<!-- <p>Invert</p><input type="checkbox" id="invert" name="invert">  -->
 
