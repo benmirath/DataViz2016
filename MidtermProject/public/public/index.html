@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<title>title</title>
+		<meta name="author" content="name">
+		<meta name="description" content="description here">
+		<meta name="keywords" content="keywords,here">
+		<link rel="stylesheet" href="/styles/styles.css" type="text/css">
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+		<script src="js/d3.min.js" type="text/javascript"></script>
+		<style type="text/css">
+			body {
+				/*background-color: #def7e0;*/
+				background-color: #FAE8E9;
+			}
+			p, svg text{
+                /*fill: #0F2105;*/
+                fill: #330B16;
+                font-family: helvetica;
+            }
+            h1 {
+            	text-align: center;
+            	font-family: helvetica;	
+            	color: #7ACDC9;
+            }
+            .bar {
+            	/*fill: #0F2105;*/
+            	fill: #7ACDC9;
+            	transition: fill .5s;
+            }
+            .bar:hover {
+            	/*fill: #2BDE73;*/
+            	fill: #DB3568;
+            }
+            .label {
+            	font-weight: bold;
+            }
+            .axis path{
+                fill: none;
+                /*stroke: #0F2105;*/
+                stroke: #330B16;
+            }
+
+            .x.axis,
+            .y.axis{
+                font-size: 16px;
+                /*color: #0F2105;*/
+                color: #330B16;
+            }
+
+            #tooltipGoalLabel, 
+            #tooltipPledgedLabel, 
+            #tooltipBackersLabel {
+            	font-weight: bold;
+            }
+            #controls {
+            	text-align: center;
+            }
+            .control {
+            	/*background-color: #DB3568;*/
+            }
+            select.control {
+            	-webkit-appearance: menulist;
+            }
+            button.control {
+            	-webkit-appearance: button;
+            }
+            div.controlsWrapper {
+            	display: inline;
+				outline-style: solid;
+				outline-width: 1px;
+				outline-color: #7ACDC9;
+				margin-right: 10px;
+				padding: 5px;
+            }
+            #entriesLabel {
+            	display: inline;
+            }
+            #entriesSlider {
+            	display: inline;
+            }
+        </style>
+	</head>
+	<body>
+  		<script src="js/main.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            // d3.json('/kickspotter?goal=300', function(error, data){
+            var access = '/kickspotter?' + appSort + '=' + appLimit;
+            console.log (access);
+            d3.json('/kickspotter', function(error, data){
+            // d3.json('data/gapminder_life_expectancy_gdp_2012.json', function(error, data){
+                console.log('called load data');
+                if(error){
+                    console.log(error);
+                }else{
+                    console.log(data);
+                    generateGraph (data);
+                    
+                    // 12. Finally, instead of calling drawChart, we'll
+                    // a) Create a new Chart object
+                    // b) Call its setup
+                    // var myChart = new Chart();
+                    // myChart.setup(data);
+
+                    // // 13. Adding a click event to the body to call
+                    // // the update
+                    // d3.select("body").on("click", function(){
+
+                    //     // 14. We don't have a real dataset to update,
+                    //     // so I'm gonna overwrite our data with
+                    //     // some random numbers.
+                    //     // This is javaScript, not d3!
+                    //     data.forEach(function(d, i, list){
+                    //         // console.log(d);
+                    //         d.gdp = Math.round(Math.random()*9000);
+                    //         d.life_expectancy = Math.round(Math.random()*80);
+                    //     });
+
+                    //     // 18. Let's remove some elements at random
+                    //     var n = Math.round(Math.random()*10);
+                    //     data.splice(0, n);
+
+                    //     myChart.update(data);
+                    // }); 
+                }
+            });            
+        </script>
+
+        <h1>KickSpotter</h1>
+        <div id="controls">
+        	<div class="controlsWrapper">
+        		<select class="control" id="resort" onchange="resort()">
+					<option value="Time">Time</option>
+					<option value="Total">Total</option>
+					<option value="Hype">Hype</option>
+				</select>
+				<select class="control" id="rescale" onchange="rescale()">
+					<option value="Goal">Goal</option>
+					<option value="Pledged">Pledged</option>
+					<option value="PledgeHype">PledgeHype</option>
+					<option value="Backers">Backers</option>
+					<option value="BackerHype">BackerHype</option>
+				</select>
+				<button class="control" type="button" onclick="invertSort()">Invert X</button>	
+        	</div>
+	        
+			<div class="controlsWrapper"> 
+				<input id="entriesSlider" type="range" defaultValue="150" value="150" min="0" max="50" step="1" />
+                <input id="entriesLabel" type="text" defaultValue="150" value="150" />
+			</div>
+			
+		</div>
+		<!-- <p>Invert</p><input type="checkbox" id="invert" name="invert">  -->
+
+	</body>
+</html>
