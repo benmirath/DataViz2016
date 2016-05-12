@@ -4,7 +4,7 @@
 //  - run node app.js
 //  - load up the index.html page via http://localhost:4000
 
-//Initial App Setup
+/*---------- EXPRESS SETUP ----------*/
 var express		= require('express'),
 	bodyParser	= require('body-parser');
 
@@ -20,23 +20,108 @@ app.use (function (req, res, next) {
 	var url = req.originalUrl;
 	console.log ('### requesting ---> ' + url);
 	next();
-})
+});
 
+var router = express.Router();
+// console.log (app.get);
 app.use ('/', express.static(__dirname + '/public'));
 
+var test = true;
 //ROUTERS
 app.get('/kickspotter', function (request, response) {
+    // console.log(request.query);
+    // console.log(request);
+    // console.log(request.query.orderBy);
+    var sorter = String(request.query.orderBy);
+    var sortType = Number(request.query.sortType);
+    var dataSorter;// = { sorter : sortType };
+
+    if (sorter === 'launched_at') {
+        dataSorter = { launched_at : sortType };        
+    } else if (sorter === 'Goal') {
+        dataSorter = { Goal : sortType };        
+    } else if (sorter === 'Pledged') {
+        dataSorter = { Pledged : sortType };        
+    } else if (sorter === 'PledgeHype') {
+        dataSorter = { PledgeHype : sortType };        
+    } else if (sorter === 'Backers') {
+        dataSorter = { Backers : sortType };        
+    } else if (sorter === 'BackerHype') {
+        dataSorter = { BackerHype : sortType };        
+    }
+
+    // console.log (dataSorter);
+    // console.log (sorter);
     readData ({
-        'goal' : { '$gte' : request.query.Goal },
-        'goalHype' : { '$gte' : request.query.GoalHype },
-        'pledged' : { '$gte' : request.query.Pledged },
-        'pledgeHype' : { '$gte' : request.query.PledgeHype }
-        // 'launched_at' : { '$gte' : request.query.launched_at }
+        'Category_Name'     : { '$eq'   : String(request.query.category) || '' },
+        'Goal'              : { '$gte'  : Number(request.query.goal) || 0 },
+        'Pledged'           : { '$gte'  : Number(request.query.pledged) || 0},
+        'PledgeHype'        : { '$gte'  : Number(request.query.pledgeHype) || 0},
+        'Backers'           : { '$gte'  : Number(request.query.backers) || 0},
+        'BackerHype'        : { '$gte'  : Number(request.query.backerHype) || 0},
+        // 'launched_at'       : { '$gte'  : Date(request.query.launchedAt || new Date("Apr 28 2008")) },  //kickstarter launch date
 	}, 
+    Number(request.query.limit) || 150,
+    // { String(request.query.orderBy) : -1 },
+    dataSorter,
+    // {'Goal': -1},
+    // _appLimit,
 	function (docs) {
 		console.log ('Called callback function');
 		response.json (docs);
 	});
+
+});
+
+app.get('/kickspotterAlt1', function (request, response) {
+    // console.log(request.query);
+    // console.log(request);
+    // console.log(request.query.orderBy);
+    var sorter = String(request.query.orderBy);
+    var sortType = Number(request.query.sortType);
+    // var dataSorter;// = { sorter : sortType };
+    var dataSorter = {
+        // launched_at : 1,
+        Backers:-1
+
+
+    }
+
+    console.log (request.query.limit);
+    // if (sorter === 'launched_at') {
+    //     dataSorter = { launched_at : sortType };        
+    // } else if (sorter === 'Goal') {
+    //     dataSorter = { Goal : sortType };        
+    // } else if (sorter === 'Pledged') {
+    //     dataSorter = { Pledged : sortType };        
+    // } else if (sorter === 'PledgeHype') {
+    //     dataSorter = { PledgeHype : sortType };        
+    // } else if (sorter === 'Backers') {
+    //     dataSorter = { Backers : sortType };        
+    // } else if (sorter === 'BackerHype') {
+    //     dataSorter = { BackerHype : sortType };        
+    // }
+
+    // console.log (dataSorter);
+    // console.log (sorter);
+    readData ({
+        'Category_Name'     : { '$eq'   : "Video Games" },
+        'Goal'              : { '$gte'  : Number(request.query.goal) || 0 },
+        'Pledged'           : { '$gte'  : Number(request.query.pledged) || 0},
+        'PledgeHype'        : { '$gte'  : Number(request.query.pledgeHype) || 0},
+        'Backers'           : { '$gte'  : Number(request.query.backers) || 0},
+        'BackerHype'        : { '$gte'  : Number(request.query.backerHype) || 0},
+        // 'launched_at'       : { '$gte'  : Date(request.query.launchedAt || new Date("Apr 28 2008")) },  //kickstarter launch date
+    }, 
+    Number(request.query.limit) || 150,
+    // { String(request.query.orderBy) : -1 },
+    dataSorter,
+    // {'Goal': -1},
+    // _appLimit,
+    function (docs) {
+        console.log ('Called callback function');
+        response.json (docs);
+    });
 
 });
 /*-------------------- MODULES --------------------*/
@@ -52,23 +137,39 @@ function initMongo () {
             db = _db;
             // console.log (db);
         } else {
-            console.log (err);
+            console.log ("error");
         }
     });
 }
 
-function readData (query, callback) {
+function readData (query, sizeLimit, orderBy, callback) {
     console.log ("Working");
     query = query || {};
-    console.log (db);
-    db.collection('projects').find (query).toArray(function (err, docs) {
+  
+    // db.open();
+    // console.log (query);
+    if (query.Goal === NaN) {
+        query.Goal = 100;
+    } 
+
+
+    // console.log (orderBy);
+    // console.log (db.collection('projects').find (query));
+    // if (query.Pl) {}
+    // console.log (db.collection('projects').find (query));
+    db.collection('projects')
+    .find (query)
+    .sort (orderBy)
+    .limit(sizeLimit)
+    .toArray(function (err, docs) {
         if (err == null) {
             if (callback !== undefined) {
+                // console.log (docs);
                 // console.log (docs);
                 callback (docs);
             }
         } else {
-            console.log (err);
+            console.log ("error");console.log (err);
         }
     });
 }
